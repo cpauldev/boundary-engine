@@ -2,7 +2,7 @@
 
 # BoundaryEngine: Secure HTTP Boundaries for TypeScript
 
-![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Validation](https://img.shields.io/badge/-Validation-2563EB?style=flat-square) ![Webhooks](https://img.shields.io/badge/-Webhook_Guards-059669?style=flat-square) ![Zod](https://img.shields.io/badge/-Zod-3068B7?style=flat-square) ![License](https://img.shields.io/badge/-MIT_License-blue?style=flat-square) [![Changelog](https://img.shields.io/badge/Changelog-v0.1.0-blue?style=flat-square)](./CHANGELOG.md)
+![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Validation](https://img.shields.io/badge/-Validation-2563EB?style=flat-square) ![Webhooks](https://img.shields.io/badge/-Webhook_Guards-059669?style=flat-square) ![Zod](https://img.shields.io/badge/-Zod-3068B7?style=flat-square) ![License](https://img.shields.io/badge/-MIT_License-blue?style=flat-square) [![Changelog](https://img.shields.io/badge/Changelog-v0.1.1-blue?style=flat-square)](./CHANGELOG.md)
 
 BoundaryEngine is a Fetch-first TypeScript toolkit for the repetitive security work around HTTP routes: body-size limits, JSON parsing, Zod validation, typed errors, sanitized responses, webhook signatures, replay hooks, and client IP extraction.
 
@@ -16,7 +16,7 @@ It is designed for developers building Fetch-compatible APIs on Node.js, Next.js
 
 ## Why use BoundaryEngine?
 
-| Feature                 | Without BoundaryEngine                                           | With **BoundaryEngine**                                                                                      |
+| Feature                 | Without BoundaryEngine                                        | With **BoundaryEngine**                                                                                   |
 | :---------------------- | :------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------- |
 | **Request Parsing**     | Every route repeats JSON parsing and malformed-body handling. | 📦 **Request Parsing.** `validateJsonBody()` handles size, parse, and schema failures.                    |
 | **Query Validation**    | Routes manually convert `URLSearchParams` into objects.       | 🔍 **Query Validation.** `validateQueryParams()` returns typed data or a safe response.                   |

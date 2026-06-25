@@ -1,6 +1,6 @@
 {
   "name": "boundary-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "author": "Christian Paul (https://github.com/cpauldev)",
   "description": "BoundaryEngine is a secure HTTP request boundary toolkit for TypeScript with validation, typed errors, sanitized responses, webhook guards, and request identity helpers.",
