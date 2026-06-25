@@ -206,7 +206,7 @@ bun run test:smoke
 ## Related Packages
 
 - [`rate-engine`](https://github.com/cpauldev/rate-engine) for policy-driven rate limiting.
-- [`redact-log`](https://github.com/cpauldev/redact-log) for safe logging.
+- [`redact-engine`](https://github.com/cpauldev/redact-engine) for sensitive data redaction.
 - [`secret-engine`](https://github.com/cpauldev/secret-engine) for context-bound encryption and secret handling.
 - [`session-engine`](https://github.com/cpauldev/session-engine) for browser session and cache lifecycle management.
 
