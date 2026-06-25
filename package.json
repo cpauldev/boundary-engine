@@ -1,0 +1,65 @@
+{
+  "name": "boundary-engine",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Christian Paul (https://github.com/cpauldev)",
+  "description": "BoundaryEngine is a secure HTTP request boundary toolkit for TypeScript with validation, typed errors, sanitized responses, webhook guards, and request identity helpers.",
+  "keywords": [
+    "api",
+    "http",
+    "validation",
+    "webhooks",
+    "typescript",
+    "zod",
+    "request",
+    "security",
+    "nextjs",
+    "fetch"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cpauldev/boundary-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cpauldev/boundary-engine/issues"
+  },
+  "homepage": "https://github.com/cpauldev/boundary-engine#readme",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "bun test src/__tests__",
+    "test:smoke": "bun -e \"const mod = await import('./dist/index.js'); for (const key of ['ApiError','createErrorFactory','sanitizeError','validateJsonBody','validateQueryParams','createRouteHandler','verifyWebhookSignature','validatePayloadSize','createWebhookGuard','getClientIp']) { if (typeof mod[key] !== 'function') throw new Error('Missing export: ' + key); }\"",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+  },
+  "peerDependencies": {
+    "zod": "^3.25.0 || ^4.0.0"
+  },
+  "dependencies": {
+    "ipaddr.js": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "bun-types": "^1.3.14",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
+  },
+  "private": false
+}
