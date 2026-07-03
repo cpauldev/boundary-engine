@@ -1,4 +1,9 @@
+import type { z } from "zod";
+
 import type { ApiError } from "./errors";
+
+/** A value or a promise for that value. */
+export type MaybePromise<T> = T | Promise<T>;
 
 /**
  * Configuration mapping API error codes to statuses and optional categories.
@@ -59,12 +64,12 @@ export type SanitizedError<TCode extends string = string> = {
  * Configurations for the error sanitization utility.
  */
 export type ErrorSanitizerOptions = {
-  /** If true, detailed raw error messages are masked in production mode. */
+  /** If true, raw error messages and unredacted API error details are omitted. */
   production?: boolean;
   /** Optional custom trace identifier to append to response bodies. */
   requestId?: string;
-  /** Optional callback to filter/redact nested detail property objects. */
-  redact?: <T>(value: T) => T;
+  /** Optional callback to filter or redact detail properties. */
+  redact?: (value: Record<string, unknown>) => Record<string, unknown>;
 };
 
 /**
@@ -90,16 +95,8 @@ export type BodyValidationOptions = {
   maxBodySize?: number;
   /** If false, suppresses logging raw received inputs on failures. */
   logReceivedData?: boolean;
-};
-
-/**
- * Payload context supplied to schema-guarded route handler callbacks.
- */
-export type RouteHandlerContext<TBody = unknown> = {
-  /** The incoming Web Request object. */
-  request: Request;
-  /** The fully validated, typed JSON request body. */
-  body: TBody;
+  /** If true, requires an application/json or +json Content-Type header. */
+  requireJsonContentType?: boolean;
 };
 
 /**
@@ -118,7 +115,7 @@ export type ClientIpOptions = {
   production?: boolean;
   /** If true, trusts the Cloudflare-managed CF-Connecting-IP header. Only enable when direct origin access is blocked. */
   trustCfConnectingIp?: boolean;
-  /** CIDR blocks representing trusted upstream reverse proxies. */
+  /** CIDR blocks representing trusted upstream proxies. Direct origin access must also be blocked. */
   trustedProxyCidrs?: string[];
   /** If true, permits private subnet IPs in production checks. */
   allowPrivateInProduction?: boolean;
@@ -182,3 +179,174 @@ export type WebhookGuardResult =
       /** Classification explanation for the failure. */
       reason: string;
     };
+
+/** Options accepted by the JSON response helper. */
+export type JsonResponseOptions = {
+  status?: number;
+  headers?: HeadersInit;
+};
+
+/** Request-local values available to route error hooks. */
+export type RouteBoundaryErrorContext<
+  TContext = unknown,
+  TBody = unknown,
+  TQuery = unknown,
+  TParams = unknown,
+> = {
+  request: Request;
+  context?: TContext;
+  params?: TParams;
+  query?: TQuery;
+  body?: TBody;
+};
+
+/** Converts an uncaught route error into a response. */
+export type RouteBoundaryErrorHandler<
+  TContext = unknown,
+  TBody = unknown,
+  TQuery = unknown,
+  TParams = unknown,
+> = (
+  error: unknown,
+  context: RouteBoundaryErrorContext<TContext, TBody, TQuery, TParams>,
+) => MaybePromise<Response>;
+
+/** Configuration for the default route error handler. */
+export type RouteBoundaryErrorHandlerOptions = ErrorSanitizerOptions & {
+  logger?: {
+    error?: (message: string, metadata?: Record<string, unknown>) => void;
+  };
+  onError?: (
+    error: unknown,
+    context: RouteBoundaryErrorContext,
+  ) => MaybePromise<void>;
+};
+
+type BoundaryContextRecord = Record<string, unknown>;
+
+type RouteBoundaryData<TBody, TQuery, TParams, TContext> = {
+  request: Request;
+} & ([TBody] extends [undefined] ? object : { body: TBody }) &
+  ([TQuery] extends [undefined] ? object : { query: TQuery }) &
+  ([TParams] extends [undefined] ? object : { params: TParams }) & {
+    context: TContext;
+  };
+
+/** Values passed to a route guard or handler. */
+export type RouteBoundaryContext<
+  TContext = Record<string, never>,
+  TBody = undefined,
+  TQuery = undefined,
+  TParams = undefined,
+> = RouteBoundaryData<TBody, TQuery, TParams, TContext>;
+
+export type RouteBoundaryGuardOutcome<TAddedContext = Record<string, never>> =
+  | { ok: true; context: TAddedContext }
+  | { ok: false; response: Response };
+
+export type RouteBoundaryRequestGuard<
+  TContext extends BoundaryContextRecord = Record<string, never>,
+  TAddedContext extends BoundaryContextRecord = Record<string, never>,
+> = (context: {
+  request: Request;
+  context: TContext;
+}) => MaybePromise<RouteBoundaryGuardOutcome<TAddedContext>>;
+
+export type RouteBoundaryGuard<
+  TContext extends BoundaryContextRecord = Record<string, never>,
+  TAddedContext extends BoundaryContextRecord = Record<string, never>,
+  TBody = undefined,
+  TQuery = undefined,
+  TParams = undefined,
+> = (
+  context: RouteBoundaryContext<TContext, TBody, TQuery, TParams>,
+) => MaybePromise<RouteBoundaryGuardOutcome<TAddedContext>>;
+
+export type RouteBoundaryHandler<
+  TContext extends BoundaryContextRecord = Record<string, never>,
+  TBody = undefined,
+  TQuery = undefined,
+  TParams = undefined,
+> = (
+  context: RouteBoundaryContext<TContext, TBody, TQuery, TParams>,
+) => MaybePromise<Response>;
+
+export type RouteBoundaryErrorMapper<
+  TContext = unknown,
+  TBody = unknown,
+  TQuery = unknown,
+  TParams = unknown,
+> = (
+  error: unknown,
+  context: RouteBoundaryErrorContext<TContext, TBody, TQuery, TParams>,
+) => MaybePromise<unknown>;
+
+export type RouteBoundaryValidationError =
+  | {
+      source: "params" | "query" | "body-schema";
+      error: z.ZodError;
+      response: Response;
+      receivedData?: unknown;
+    }
+  | {
+      source: "body-size" | "body-json";
+      response: Response;
+      receivedData?: unknown;
+    };
+
+export type RouteBoundaryValidationHandler<
+  TContext = unknown,
+  TBody = unknown,
+  TQuery = unknown,
+  TParams = unknown,
+> = (
+  error: RouteBoundaryValidationError,
+  context: RouteBoundaryErrorContext<TContext, TBody, TQuery, TParams>,
+) => MaybePromise<Response | void>;
+
+export type RouteBoundaryOptions<
+  TContext extends BoundaryContextRecord = Record<string, never>,
+> = {
+  context?: TContext | ((request: Request) => MaybePromise<TContext>);
+  errorHandler?: RouteBoundaryErrorHandler<TContext>;
+};
+
+export type RouteBoundaryRequestOptions<TParams> = [TParams] extends [undefined]
+  ? { params?: unknown }
+  : { params: unknown };
+
+export interface RouteBoundaryBuilder<
+  TContext extends BoundaryContextRecord = Record<string, never>,
+  TBody = undefined,
+  TQuery = undefined,
+  TParams = undefined,
+> {
+  body<TSchema extends z.ZodTypeAny>(
+    schema: TSchema,
+    options?: BodyValidationOptions,
+  ): RouteBoundaryBuilder<TContext, z.infer<TSchema>, TQuery, TParams>;
+  query<TSchema extends z.ZodTypeAny>(
+    schema: TSchema,
+  ): RouteBoundaryBuilder<TContext, TBody, z.infer<TSchema>, TParams>;
+  params<TSchema extends z.ZodTypeAny>(
+    schema: TSchema,
+  ): RouteBoundaryBuilder<TContext, TBody, TQuery, z.infer<TSchema>>;
+  requestGuard<TAddedContext extends BoundaryContextRecord>(
+    guard: RouteBoundaryRequestGuard<TContext, TAddedContext>,
+  ): RouteBoundaryBuilder<TContext & TAddedContext, TBody, TQuery, TParams>;
+  guard<TAddedContext extends BoundaryContextRecord>(
+    guard: RouteBoundaryGuard<TContext, TAddedContext, TBody, TQuery, TParams>,
+  ): RouteBoundaryBuilder<TContext & TAddedContext, TBody, TQuery, TParams>;
+  onError(
+    mapper: RouteBoundaryErrorMapper<TContext, TBody, TQuery, TParams>,
+  ): RouteBoundaryBuilder<TContext, TBody, TQuery, TParams>;
+  onValidationError(
+    handler: RouteBoundaryValidationHandler<TContext, TBody, TQuery, TParams>,
+  ): RouteBoundaryBuilder<TContext, TBody, TQuery, TParams>;
+  handle(
+    handler: RouteBoundaryHandler<TContext, TBody, TQuery, TParams>,
+  ): (
+    request: Request,
+    options?: RouteBoundaryRequestOptions<TParams>,
+  ) => Promise<Response>;
+}

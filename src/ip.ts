@@ -62,8 +62,9 @@ function isLocalhost(value: string | null): boolean {
 }
 
 /**
- * Resolves the true client IP address from request headers.
- * Safely walks backwards through multi-hop proxy chains (e.g. `X-Forwarded-For`) to peel off trusted proxies.
+ * Resolves a client IP from proxy headers. In production, callers must also
+ * prevent direct origin access because Fetch `Request` does not expose the
+ * socket peer needed to prove that the terminal hop set the header.
  *
  * @param request The request context.
  * @param options Configurations for production environments, trusted CIDRs, and fallbacks.

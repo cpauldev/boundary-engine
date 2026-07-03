@@ -100,6 +100,12 @@ function containsSensitiveInfo(message: string): boolean {
   return SENSITIVE_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+function normalizeErrorStatus(status: number): number {
+  return Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : 500;
+}
+
 /**
  * Sanitizes an unknown error caught in route logic into a standard response shape.
  * Automatically redacts sensitive information (like API keys or passwords) and
@@ -116,7 +122,7 @@ export function sanitizeError<TCode extends string = string>(
   const requestId = options.requestId ?? generateRequestId();
   const timestamp = new Date().toISOString();
   const isApiError = error instanceof ApiError;
-  const statusCode = isApiError ? error.statusCode : 500;
+  const statusCode = normalizeErrorStatus(isApiError ? error.statusCode : 500);
   const fallback = messageForStatus(statusCode);
   const rawMessage =
     error instanceof Error
@@ -138,9 +144,13 @@ export function sanitizeError<TCode extends string = string>(
 
   if (isApiError) {
     sanitized.code = error.code as TCode;
-    sanitized.details = options.redact
-      ? options.redact(error.details)
-      : error.details;
+    if (error.details !== undefined) {
+      sanitized.details = options.redact
+        ? options.redact(error.details)
+        : options.production
+          ? undefined
+          : error.details;
+    }
   }
 
   return sanitized;

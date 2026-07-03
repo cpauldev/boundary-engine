@@ -5,7 +5,14 @@ import type {
   WebhookGuardResult,
   WebhookSignatureOptions,
 } from "./types";
-import { validatePayloadSize } from "./validation";
+
+import {
+  BodyTooLargeError,
+  bodyTooLargeResponse,
+  DEFAULT_MAX_BODY_SIZE,
+  readRequestBodyWithLimit,
+} from "./body-reader";
+import { errorJson } from "./responses";
 
 function extractSignature(signature: string): string | null {
   if (!signature) return null;
@@ -18,8 +25,12 @@ function extractSignature(signature: string): string | null {
 }
 
 /**
- * Verifies an incoming webhook HMAC signature using timing-safe comparison to block timing attacks.
- * Automatically parses header formats (e.g. Stripe signature schemes).
+ * Verifies a hexadecimal HMAC-SHA256 signature over the supplied payload using
+ * a constant-time comparison. It accepts a bare digest or a comma-delimited
+ * header containing a `v1=<digest>` field.
+ *
+ * Provider schemes that sign a transformed payload, such as a timestamp
+ * concatenated with the body, must supply that exact signed payload.
  *
  * @param options Webhook signature options (payload, signature, secret, algorithm).
  * @returns True if the webhook signature is authentic.
@@ -27,7 +38,7 @@ function extractSignature(signature: string): string | null {
 export function verifyWebhookSignature(
   options: WebhookSignatureOptions,
 ): boolean {
-  if (!options.signature) return false;
+  if (!options.signature || !options.secret) return false;
   const provided = extractSignature(options.signature);
   if (!provided) return false;
 
@@ -47,28 +58,30 @@ export function verifyWebhookSignature(
   }
 }
 
-function jsonResponse(data: unknown, status: number): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 /**
  * Creates a webhook guard middleware wrapper.
- * Performs payload size checking, signature verification, and fail-closed replay protection automatically.
+ * Performs bounded body reading, signature verification, and optional replay
+ * checking. A missing webhook ID or a replay-store error fails closed when a
+ * replay callback is configured.
  *
  * @param options Guard configuration (secret, replay callback, headers, maximum size).
  * @returns An async handler function that accepts a Request and returns a WebhookGuardResult.
  */
 export function createWebhookGuard(options: WebhookGuardOptions) {
   return async (request: Request): Promise<WebhookGuardResult> => {
-    const rawBody = Buffer.from(await request.arrayBuffer());
-    const size = validatePayloadSize(rawBody, options.maxBodySize);
-    if (!size.ok) {
+    let rawBody: Buffer;
+    try {
+      rawBody = Buffer.from(
+        await readRequestBodyWithLimit(
+          request,
+          options.maxBodySize ?? DEFAULT_MAX_BODY_SIZE,
+        ),
+      );
+    } catch (error) {
+      if (!(error instanceof BodyTooLargeError)) throw error;
       return {
         ok: false,
-        response: size.response,
+        response: bodyTooLargeResponse(error.maxBytes),
         reason: "payload_too_large",
       };
     }
@@ -85,7 +98,7 @@ export function createWebhookGuard(options: WebhookGuardOptions) {
     ) {
       return {
         ok: false,
-        response: jsonResponse({ error: "Invalid webhook signature" }, 401),
+        response: errorJson({ error: "Invalid webhook signature" }, 401),
         reason: "invalid_signature",
       };
     }
@@ -95,15 +108,27 @@ export function createWebhookGuard(options: WebhookGuardOptions) {
       if (!webhookId) {
         return {
           ok: false,
-          response: jsonResponse({ error: "Missing webhook identifier" }, 400),
+          response: errorJson({ error: "Missing webhook identifier" }, 400),
           reason: "missing_webhook_id",
         };
       }
-      const replay = await options.replay(webhookId, signature ?? "");
+      let replay: boolean;
+      try {
+        replay = await options.replay(webhookId, signature ?? "");
+      } catch {
+        return {
+          ok: false,
+          response: errorJson(
+            { error: "Webhook replay check unavailable" },
+            503,
+          ),
+          reason: "replay_check_failed",
+        };
+      }
       if (replay) {
         return {
           ok: false,
-          response: jsonResponse({ error: "Webhook replay detected" }, 409),
+          response: errorJson({ error: "Webhook replay detected" }, 409),
           reason: "replay_detected",
         };
       }
