@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-10-22
+
+### Breaking changes
+
+- Fetch handlers without validated params accept only the request. Handlers with `.params(...)` require a second argument containing `params`. Frameworks can supply this context directly; direct callers must pass it explicitly.
+
+### Fixed
+
+- Emit Node-compatible ESM imports and declarations.
+- Clean build output before compiling and check Node runtime exports before packing.
+
+### Added
+
+- Export `RouteBoundaryFetchHandler` for framework-compatible handler signatures.
+
 ## [1.0.0] - 2026-07-03
 
 ### Added

@@ -1,14 +1,17 @@
 import type { z } from "zod";
 
-import type { BodyValidationOptions, ValidationErrorResponse } from "./types";
+import type {
+  BodyValidationOptions,
+  ValidationErrorResponse,
+} from "./types.js";
 
 import {
   BodyTooLargeError,
   bodyTooLargeResponse,
   DEFAULT_MAX_BODY_SIZE,
   readRequestBodyWithLimit,
-} from "./body-reader";
-import { errorJson } from "./responses";
+} from "./body-reader.js";
+import { errorJson } from "./responses.js";
 
 /**
  * Checks if a raw payload size exceeds a specific byte limit.
@@ -21,8 +24,7 @@ export function validatePayloadSize(
   payload: Buffer | string | Uint8Array,
   maxBytes = DEFAULT_MAX_BODY_SIZE,
 ):
-  | { ok: true; size: number }
-  | { ok: false; size: number; response: Response } {
+  { ok: true; size: number } | { ok: false; size: number; response: Response } {
   const size =
     typeof payload === "string"
       ? Buffer.byteLength(payload, "utf8")

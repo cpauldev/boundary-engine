@@ -7,6 +7,7 @@ import type {
   RouteBoundaryContext,
   RouteBoundaryErrorContext,
   RouteBoundaryErrorMapper,
+  RouteBoundaryFetchHandler,
   RouteBoundaryGuard,
   RouteBoundaryGuardOutcome,
   RouteBoundaryHandler,
@@ -15,15 +16,15 @@ import type {
   RouteBoundaryRequestOptions,
   RouteBoundaryValidationError,
   RouteBoundaryValidationHandler,
-} from "./types";
+} from "./types.js";
 
-import { createBoundaryErrorHandler } from "./error-handler";
-import { errorJson } from "./responses";
+import { createBoundaryErrorHandler } from "./error-handler.js";
+import { errorJson } from "./responses.js";
 import {
   formatZodError,
   validateJsonBody,
   validateQueryParams,
-} from "./validation";
+} from "./validation.js";
 
 type BoundaryConfig = {
   bodySchema?: z.ZodTypeAny;
@@ -123,11 +124,11 @@ class ImmutableRouteBoundaryBuilder<
 
   handle(
     handler: RouteBoundaryHandler<TContext, TBody, TQuery, TParams>,
-  ): (
-    request: Request,
-    options?: RouteBoundaryRequestOptions<TParams>,
-  ) => Promise<Response> {
-    return async (request, requestOptions) => {
+  ): RouteBoundaryFetchHandler<TParams> {
+    const fetchHandler = async (
+      request: Request,
+      requestOptions?: RouteBoundaryRequestOptions<TParams>,
+    ) => {
       const errorHandler =
         this.options.errorHandler ?? createBoundaryErrorHandler();
       const state: RouteBoundaryErrorContext<TContext, TBody, TQuery, TParams> =
@@ -264,6 +265,7 @@ class ImmutableRouteBoundaryBuilder<
         return errorHandler(mappedError, state);
       }
     };
+    return fetchHandler as RouteBoundaryFetchHandler<TParams>;
   }
 
   private withConfig<

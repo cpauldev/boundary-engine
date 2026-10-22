@@ -1,4 +1,4 @@
-import type { JsonResponseOptions } from "./types";
+import type { JsonResponseOptions } from "./types.js";
 
 function mergeJsonHeaders(headers?: HeadersInit): Headers {
   const merged = new Headers(headers);

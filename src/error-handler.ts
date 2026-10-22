@@ -1,10 +1,10 @@
 import type {
   RouteBoundaryErrorHandler,
   RouteBoundaryErrorHandlerOptions,
-} from "./types";
+} from "./types.js";
 
-import { sanitizeError } from "./errors";
-import { errorJson } from "./responses";
+import { sanitizeError } from "./errors.js";
+import { errorJson } from "./responses.js";
 
 export function createBoundaryErrorHandler(
   options: RouteBoundaryErrorHandlerOptions = {},

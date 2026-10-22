@@ -3,18 +3,18 @@ export {
   createErrorFactory,
   getDefaultStatusCode,
   sanitizeError,
-} from "./errors";
+} from "./errors.js";
 export {
   formatZodError,
   validateJsonBody,
   validatePayloadSize,
   validateQueryParams,
-} from "./validation";
-export { createBoundaryErrorHandler } from "./error-handler";
-export { createRouteBoundary } from "./route-boundary";
-export { empty, errorJson, json } from "./responses";
-export { createWebhookGuard, verifyWebhookSignature } from "./webhook";
-export { getClientIp, isIpInCidr, isValidIp } from "./ip";
+} from "./validation.js";
+export { createBoundaryErrorHandler } from "./error-handler.js";
+export { createRouteBoundary } from "./route-boundary.js";
+export { empty, errorJson, json } from "./responses.js";
+export { createWebhookGuard, verifyWebhookSignature } from "./webhook.js";
+export { getClientIp, isIpInCidr, isValidIp } from "./ip.js";
 
 export type {
   ApiErrorCodeConfig,
@@ -31,6 +31,7 @@ export type {
   RouteBoundaryErrorHandler,
   RouteBoundaryErrorHandlerOptions,
   RouteBoundaryErrorMapper,
+  RouteBoundaryFetchHandler,
   RouteBoundaryGuard,
   RouteBoundaryGuardOutcome,
   RouteBoundaryHandler,
@@ -44,4 +45,4 @@ export type {
   WebhookGuardOptions,
   WebhookGuardResult,
   WebhookSignatureOptions,
-} from "./types";
+} from "./types.js";

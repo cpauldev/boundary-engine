@@ -1,6 +1,6 @@
 import * as ipaddr from "ipaddr.js";
 
-import type { ClientIpOptions, HeaderReader } from "./types";
+import type { ClientIpOptions, HeaderReader } from "./types.js";
 
 function parseIp(value: string): ipaddr.IPv4 | ipaddr.IPv6 | null {
   try {

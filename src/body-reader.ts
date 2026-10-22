@@ -1,4 +1,4 @@
-import { errorJson } from "./responses";
+import { errorJson } from "./responses.js";
 
 export const DEFAULT_MAX_BODY_SIZE = 1024 * 1024;
 

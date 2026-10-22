@@ -4,15 +4,15 @@ import type {
   WebhookGuardOptions,
   WebhookGuardResult,
   WebhookSignatureOptions,
-} from "./types";
+} from "./types.js";
 
 import {
   BodyTooLargeError,
   bodyTooLargeResponse,
   DEFAULT_MAX_BODY_SIZE,
   readRequestBodyWithLimit,
-} from "./body-reader";
-import { errorJson } from "./responses";
+} from "./body-reader.js";
+import { errorJson } from "./responses.js";
 
 function extractSignature(signature: string): string | null {
   if (!signature) return null;

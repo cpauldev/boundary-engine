@@ -1,6 +1,6 @@
 {
   "name": "boundary-engine",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": false,
   "description": "BoundaryEngine is a Fetch-first route boundary toolkit for TypeScript with typed validation, guard pipelines, sanitized errors, webhook protection, and request identity helpers.",
   "keywords": [
@@ -42,19 +42,21 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prepack": "npm run build && npm run test:smoke",
     "test": "bun test src/__tests__",
-    "test:smoke": "bun -e \"const mod = await import('./dist/index.js'); for (const key of ['ApiError','createErrorFactory','sanitizeError','validateJsonBody','validateQueryParams','createRouteBoundary','createBoundaryErrorHandler','json','empty','errorJson','verifyWebhookSignature','validatePayloadSize','createWebhookGuard','getClientIp']) { if (typeof mod[key] !== 'function') throw new Error('Missing export: ' + key); }\"",
+    "test:smoke": "node --input-type=module -e \"const mod = await import('./dist/index.js'); for (const key of ['ApiError','createErrorFactory','sanitizeError','validateJsonBody','validateQueryParams','createRouteBoundary','createBoundaryErrorHandler','json','empty','errorJson','verifyWebhookSignature','validatePayloadSize','createWebhookGuard','getClientIp']) { if (typeof mod[key] !== 'function') throw new Error('Missing export: ' + key); }\"",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "ipaddr.js": "^2.4.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.4",
+    "@types/node": "^26.6.5",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "bun-types": "^1.3.14",
-    "typescript": "^6.0.3",
+    "typescript": "~6.0.3",
     "zod": "^4.4.3"
   },
   "peerDependencies": {

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { ApiError } from "./errors";
+import type { ApiError } from "./errors.js";
 
 /** A value or a promise for that value. */
 export type MaybePromise<T> = T | Promise<T>;
@@ -241,8 +241,7 @@ export type RouteBoundaryContext<
 > = RouteBoundaryData<TBody, TQuery, TParams, TContext>;
 
 export type RouteBoundaryGuardOutcome<TAddedContext = Record<string, never>> =
-  | { ok: true; context: TAddedContext }
-  | { ok: false; response: Response };
+  { ok: true; context: TAddedContext } | { ok: false; response: Response };
 
 export type RouteBoundaryRequestGuard<
   TContext extends BoundaryContextRecord = Record<string, never>,
@@ -315,6 +314,16 @@ export type RouteBoundaryRequestOptions<TParams> = [TParams] extends [undefined]
   ? { params?: unknown }
   : { params: unknown };
 
+/** Fetch handlers without validated params expose no framework context argument. */
+export type RouteBoundaryFetchHandler<TParams = undefined> = [TParams] extends [
+  undefined,
+]
+  ? (request: Request) => Promise<Response>
+  : (
+      request: Request,
+      options: RouteBoundaryRequestOptions<TParams>,
+    ) => Promise<Response>;
+
 export interface RouteBoundaryBuilder<
   TContext extends BoundaryContextRecord = Record<string, never>,
   TBody = undefined,
@@ -345,8 +354,5 @@ export interface RouteBoundaryBuilder<
   ): RouteBoundaryBuilder<TContext, TBody, TQuery, TParams>;
   handle(
     handler: RouteBoundaryHandler<TContext, TBody, TQuery, TParams>,
-  ): (
-    request: Request,
-    options?: RouteBoundaryRequestOptions<TParams>,
-  ) => Promise<Response>;
+  ): RouteBoundaryFetchHandler<TParams>;
 }

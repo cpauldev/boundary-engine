@@ -4,7 +4,7 @@ import type {
   ErrorFactory,
   ErrorSanitizerOptions,
   SanitizedError,
-} from "./types";
+} from "./types.js";
 
 /**
  * A custom Error class representing an API-specific exception with error code,

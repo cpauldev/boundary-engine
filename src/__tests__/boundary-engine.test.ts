@@ -18,9 +18,32 @@ import {
   validatePayloadSize,
   validateQueryParams,
   verifyWebhookSignature,
-} from "../index";
+} from "../index.js";
 
 describe("boundary-engine", () => {
+  it("exposes framework-compatible Fetch handler signatures", async () => {
+    const handler = createRouteBoundary().handle(() => json({ ok: true }));
+    expectTypeOf<Parameters<typeof handler>>().toEqualTypeOf<
+      [request: Request]
+    >();
+    type FrameworkHandler = (
+      request: Request,
+      context: { params: Promise<Record<string, string>> },
+    ) => Promise<Response>;
+    expectTypeOf(handler).toExtend<FrameworkHandler>();
+
+    const paramHandler = createRouteBoundary()
+      .params(z.object({ id: z.string() }))
+      .handle(({ params }) => json({ id: params.id }));
+    expectTypeOf<Parameters<typeof paramHandler>>().toEqualTypeOf<
+      [request: Request, options: { params: unknown }]
+    >();
+    const response = await paramHandler(new Request("https://example.com"), {
+      params: { id: "user_1" },
+    });
+    expect(await response.json()).toEqual({ id: "user_1" });
+  });
+
   it("preserves route boundary input and context types", () => {
     createRouteBoundary()
       .requestGuard(() => ({
